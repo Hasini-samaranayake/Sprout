@@ -43,7 +43,7 @@ const S = {
 const USERS: { email: string; full_name: string; role: "tutor" | "student" }[] =
   [
     { email: "tutor@sprout.demo", full_name: "Hasini Samaranayake", role: "tutor" },
-    { email: "alex.thriving@sprout.demo", full_name: "Alex Rivera", role: "student" },
+    { email: "alex.thriving@sprout.demo", full_name: "Callum Pererra", role: "student" },
     {
       email: "brianna.struggling@sprout.demo",
       full_name: "Brianna Cole",
@@ -51,13 +51,13 @@ const USERS: { email: string; full_name: string; role: "tutor" | "student" }[] =
     },
     {
       email: "carlos.inactive@sprout.demo",
-      full_name: "Carlos Mendez",
+      full_name: "Riona Panandian",
       role: "student",
     },
-    { email: "dana.streak@sprout.demo", full_name: "Dana Okonkwo", role: "student" },
+    { email: "dana.streak@sprout.demo", full_name: "Melissa Mathews", role: "student" },
     {
       email: "elena.followup@sprout.demo",
-      full_name: "Elena Petrov",
+      full_name: "Iqra Syed",
       role: "student",
     },
   ];
@@ -237,7 +237,7 @@ async function main() {
 
   await admin.from("tasks").upsert(taskRows, { onConflict: "id" });
 
-  const dueElenaPast = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString();
+  const dueIqraPast = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString();
 
   await admin.from("lessons").upsert(
     [
@@ -270,7 +270,7 @@ async function main() {
         subject_id: S.subjEng,
         title: "Thesis clarity",
         order_index: 1,
-        due_at: dueElenaPast,
+        due_at: dueIqraPast,
         assigned_student_id: elena,
       },
     ],
