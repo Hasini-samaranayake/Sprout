@@ -1,9 +1,9 @@
 import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import { getSessionUser } from "@/lib/auth/get-profile";
-import { LoginForm } from "./login-form";
+import { SignupForm } from "./signup-form";
 
-export default async function LoginPage({
+export default async function SignupPage({
   searchParams,
 }: {
   searchParams: Promise<{ next?: string }>;
@@ -18,7 +18,7 @@ export default async function LoginPage({
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-stone-50 px-4 py-12">
       <Suspense fallback={<p className="text-sm text-stone-500">Loading…</p>}>
-        <LoginForm />
+        <SignupForm />
       </Suspense>
     </div>
   );

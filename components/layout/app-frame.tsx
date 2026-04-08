@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { SproutLogo } from "@/components/brand/sprout-logo";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { signOutAction } from "@/app/actions/auth";
@@ -31,9 +32,10 @@ export function AppFrame({
           <div className="flex items-center gap-8">
             <Link
               href={role === "student" ? "/dashboard/student" : "/dashboard/tutor"}
-              className="text-lg font-semibold tracking-tight text-teal-800"
+              className="flex items-center gap-2 text-lg font-semibold tracking-tight text-teal-800"
             >
-              Sprout
+              <SproutLogo size={36} />
+              <span>Sprout</span>
             </Link>
             <nav className="hidden gap-1 sm:flex" aria-label="Main">
               {links.map((l) => (
