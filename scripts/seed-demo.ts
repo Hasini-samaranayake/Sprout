@@ -43,15 +43,15 @@ const S = {
 const USERS: { email: string; full_name: string; role: "tutor" | "student" }[] =
   [
     { email: "tutor@sprout.demo", full_name: "Hasini Samaranayake", role: "tutor" },
-    { email: "alex.thriving@sprout.demo", full_name: "Callum Pererra", role: "student" },
+    { email: "callum.perera@sprout.demo", full_name: "Callum Perera", role: "student" },
     {
       email: "brianna.struggling@sprout.demo",
-      full_name: "Brianna Cole",
+      full_name: "Bella Smith",
       role: "student",
     },
     {
       email: "carlos.inactive@sprout.demo",
-      full_name: "Riona Panandian",
+      full_name: "Riona Das",
       role: "student",
     },
     { email: "dana.streak@sprout.demo", full_name: "Melissa Mathews", role: "student" },
@@ -131,13 +131,13 @@ async function main() {
   }
 
   const tutorId = ids["tutor@sprout.demo"]!;
-  const alex = ids["alex.thriving@sprout.demo"]!;
+  const callum = ids["callum.perera@sprout.demo"]!;
   const brianna = ids["brianna.struggling@sprout.demo"]!;
   const carlos = ids["carlos.inactive@sprout.demo"]!;
   const dana = ids["dana.streak@sprout.demo"]!;
   const elena = ids["elena.followup@sprout.demo"]!;
 
-  for (const sid of [alex, brianna, carlos, dana, elena]) {
+  for (const sid of [callum, brianna, carlos, dana, elena]) {
     await admin.from("tutor_student_links").upsert(
       { tutor_id: tutorId, student_id: sid },
       { onConflict: "tutor_id,student_id" }
@@ -338,8 +338,8 @@ async function main() {
   );
 
   const enroll = [
-    { student_id: alex, subject_id: S.subjMath },
-    { student_id: alex, subject_id: S.subjPhy },
+    { student_id: callum, subject_id: S.subjMath },
+    { student_id: callum, subject_id: S.subjPhy },
     { student_id: brianna, subject_id: S.subjMath },
     { student_id: brianna, subject_id: S.subjEng },
     { student_id: carlos, subject_id: S.subjMath },
@@ -357,7 +357,7 @@ async function main() {
     new Date(Date.now() - d * 24 * 60 * 60 * 1000).toISOString();
 
   await admin.from("task_attempts").delete().in("student_id", [
-    alex,
+    callum,
     brianna,
     carlos,
     dana,
@@ -366,7 +366,7 @@ async function main() {
 
   await admin.from("task_attempts").insert([
     {
-      student_id: alex,
+      student_id: callum,
       task_id: S.task0,
       lesson_id: S.lesMath1,
       raw_answer: "12",
@@ -476,7 +476,7 @@ async function main() {
   ]);
 
   await admin.from("activity_events").delete().in("student_id", [
-    alex,
+    callum,
     brianna,
     carlos,
     dana,
@@ -484,8 +484,8 @@ async function main() {
   ]);
 
   await admin.from("activity_events").insert([
-    { student_id: alex, type: "task_submit", occurred_at: daysAgo(0) },
-    { student_id: alex, type: "task_submit", occurred_at: daysAgo(1) },
+    { student_id: callum, type: "task_submit", occurred_at: daysAgo(0) },
+    { student_id: callum, type: "task_submit", occurred_at: daysAgo(1) },
     { student_id: brianna, type: "task_submit", occurred_at: daysAgo(2) },
     { student_id: carlos, type: "task_submit", occurred_at: daysAgo(9) },
     { student_id: dana, type: "task_submit", occurred_at: daysAgo(1) },
@@ -495,7 +495,7 @@ async function main() {
   await admin.from("streak_records").upsert(
     [
       {
-        student_id: alex,
+        student_id: callum,
         current_streak: 6,
         longest_streak: 9,
         last_activity_date: new Date().toISOString().slice(0, 10),
@@ -531,7 +531,7 @@ async function main() {
   );
 
   await admin.from("progress_records").delete().in("student_id", [
-    alex,
+    callum,
     brianna,
     carlos,
     dana,
@@ -540,13 +540,13 @@ async function main() {
 
   await admin.from("progress_records").insert([
     {
-      student_id: alex,
+      student_id: callum,
       subject_id: S.subjMath,
       lesson_id: null,
       completion_pct: 78,
     },
     {
-      student_id: alex,
+      student_id: callum,
       subject_id: S.subjPhy,
       lesson_id: null,
       completion_pct: 52,

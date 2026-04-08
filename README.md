@@ -48,7 +48,7 @@ Password for all (from seed script): **`DemoSprout2026!`**
 | Role   | Email                      |
 |--------|----------------------------|
 | Tutor  | `tutor@sprout.demo`        |
-| Student| `alex.thriving@sprout.demo` |
+| Student| `callum.perera@sprout.demo` |
 | Student| `brianna.struggling@sprout.demo` |
 | Student| `carlos.inactive@sprout.demo` |
 | Student| `dana.streak@sprout.demo`  |

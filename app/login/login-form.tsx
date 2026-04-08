@@ -19,6 +19,7 @@ import {
   RoleToggle,
   type AccountRole,
 } from "@/components/auth/role-toggle";
+import { postAuthRedirectPath } from "@/lib/auth/post-auth-redirect";
 
 function dashboardPathForRole(role: AccountRole) {
   return role === "tutor" ? "/dashboard/tutor" : "/dashboard/student";
@@ -116,12 +117,12 @@ export function LoginForm() {
       return;
     }
 
-    const target =
+    const raw =
       next.startsWith("/") && !next.startsWith("//")
         ? next
         : dashboardPathForRole(actual);
 
-    window.location.assign(target);
+    window.location.assign(postAuthRedirectPath(raw));
   }
 
   return (

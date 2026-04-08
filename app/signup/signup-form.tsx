@@ -19,6 +19,7 @@ import {
   RoleToggle,
   type AccountRole,
 } from "@/components/auth/role-toggle";
+import { postAuthRedirectPath } from "@/lib/auth/post-auth-redirect";
 
 function defaultNextForRole(role: AccountRole) {
   return role === "tutor" ? "/dashboard/tutor" : "/dashboard/student";
@@ -40,10 +41,11 @@ export function SignupForm() {
 
   const explicitNext = searchParams.get("next");
   const next = useMemo(() => {
-    if (explicitNext?.startsWith("/") && !explicitNext.startsWith("//")) {
-      return explicitNext;
-    }
-    return defaultNextForRole(role);
+    const raw =
+      explicitNext?.startsWith("/") && !explicitNext.startsWith("//")
+        ? explicitNext
+        : defaultNextForRole(role);
+    return postAuthRedirectPath(raw);
   }, [explicitNext, role]);
 
   const syncRoleToUrl = useCallback(

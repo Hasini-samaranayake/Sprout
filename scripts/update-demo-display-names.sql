@@ -7,11 +7,11 @@ set full_name = 'Hasini Samaranayake'
 where email = 'tutor@sprout.demo';
 
 update public.profiles
-set full_name = 'Callum Pererra'
-where email = 'alex.thriving@sprout.demo';
+set full_name = 'Callum Perera'
+where email = 'callum.perera@sprout.demo';
 
 update public.profiles
-set full_name = 'Riona Panandian'
+set full_name = 'Riona Das'
 where email = 'carlos.inactive@sprout.demo';
 
 update public.profiles
@@ -22,5 +22,6 @@ update public.profiles
 set full_name = 'Iqra Syed'
 where email = 'elena.followup@sprout.demo';
 
--- Brianna unchanged in seed; include only if you renamed her in seed-demo.ts:
--- update public.profiles set full_name = 'Brianna Cole' where email = 'brianna.struggling@sprout.demo';
+update public.profiles
+set full_name = 'Bella Smith'
+where email = 'brianna.struggling@sprout.demo';
