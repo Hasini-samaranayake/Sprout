@@ -9,11 +9,10 @@
  */
 import { config as loadEnv } from "dotenv";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { DEMO_PASSWORD, USERS } from "./demo-users";
 
 loadEnv({ path: ".env.local" });
 loadEnv();
-
-const DEMO_PASSWORD = "DemoSprout2026!";
 
 /** Stable graph IDs (do not change between runs) */
 const S = {
@@ -39,28 +38,6 @@ const S = {
   note1: "50000000-0000-4000-8000-000000000001",
   note2: "50000000-0000-4000-8000-000000000002",
 };
-
-const USERS: { email: string; full_name: string; role: "tutor" | "student" }[] =
-  [
-    { email: "tutor@sprout.demo", full_name: "Hasini Samaranayake", role: "tutor" },
-    { email: "callum.perera@sprout.demo", full_name: "Callum Perera", role: "student" },
-    {
-      email: "brianna.struggling@sprout.demo",
-      full_name: "Bella Smith",
-      role: "student",
-    },
-    {
-      email: "carlos.inactive@sprout.demo",
-      full_name: "Riona Das",
-      role: "student",
-    },
-    { email: "dana.streak@sprout.demo", full_name: "Melissa Mathews", role: "student" },
-    {
-      email: "elena.followup@sprout.demo",
-      full_name: "Iqra Syed",
-      role: "student",
-    },
-  ];
 
 /** Paginate through Auth users — default listUsers() only returns the first page. */
 async function findAuthUserByEmail(admin: SupabaseClient, email: string) {

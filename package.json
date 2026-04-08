@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "seed": "tsx scripts/seed-demo.ts"
+    "seed": "tsx scripts/seed-demo.ts",
+    "sync:demo-names": "tsx scripts/sync-demo-profile-names.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.3.0",
