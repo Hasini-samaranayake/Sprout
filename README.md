@@ -1,36 +1,89 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Sprout (MVP)
 
-## Getting Started
+Sprout is a tutoring web app built with **Next.js (App Router)**, **Supabase Auth + Postgres + RLS**, **Tailwind**, **shadcn/ui**, and **Recharts**. It focuses on guided lessons, deterministic feedback, tutor decision-support (alerts, roster metrics), and seeded demo data.
 
-First, run the development server:
+## Prerequisites
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+- Node.js 20+
+- A [Supabase](https://supabase.com/) project
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Setup
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+1. **Clone / open this project** and install dependencies:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+   ```bash
+   npm install
+   ```
 
-## Learn More
+2. **Environment variables** — copy `.env.example` to **`.env.local`** (Next.js only loads `.env.local`, not `.env.example`) and fill in values from Supabase **Project Settings → API**:
 
-To learn more about Next.js, take a look at the following resources:
+   - `NEXT_PUBLIC_SUPABASE_URL`
+   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+   - `SUPABASE_SERVICE_ROLE_KEY` (keep secret; used only on the server / for `npm run seed`)
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+3. **Apply the database schema** — in the Supabase SQL editor (or via CLI), run the migration:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+   - File: [`supabase/migrations/20260408000000_init.sql`](supabase/migrations/20260408000000_init.sql)
 
-## Deploy on Vercel
+4. **Seed demo users and data** (requires service role key):
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+   ```bash
+   npm run seed
+   ```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+   This creates demo accounts (same password for all) and links a tutor to five students, with subjects, lessons, tasks, attempts, streaks, progress, and sample notes.
+
+5. **Run the app**:
+
+   ```bash
+   npm run dev
+   ```
+
+   Open [http://localhost:3000](http://localhost:3000). You will be redirected to `/login`.
+
+## Demo accounts (after seed)
+
+Password for all (from seed script): **`DemoSprout2026!`**
+
+| Role   | Email                      |
+|--------|----------------------------|
+| Tutor  | `tutor@sprout.demo`        |
+| Student| `alex.thriving@sprout.demo` |
+| Student| `brianna.struggling@sprout.demo` |
+| Student| `carlos.inactive@sprout.demo` |
+| Student| `dana.streak@sprout.demo`  |
+| Student| `elena.followup@sprout.demo` |
+
+## Routes
+
+| Path | Description |
+|------|-------------|
+| `/login` | Email / password sign-in |
+| `/dashboard` | Redirects by role |
+| `/dashboard/student` | Student home |
+| `/dashboard/tutor` | Tutor roster + alerts |
+| `/subjects/[id]` | Subject detail (student) |
+| `/lessons/[id]` | Guided lesson steps (student) |
+| `/students/[id]` | Tutor student profile |
+| `/settings` | Basic profile placeholder |
+
+## Deploy (e.g. Vercel)
+
+1. Create a Supabase project and run the migration SQL.
+2. Set the same three env vars in Vercel (use **Production** and **Preview** as needed).
+3. Run `npm run seed` locally against that project once, or run it in CI with `SUPABASE_SERVICE_ROLE_KEY` stored as a secret.
+4. Connect the repo and deploy; default Next.js settings work.
+
+## Architecture notes
+
+- **Feedback**: Deterministic evaluation in `services/feedback/` with a provider interface for future AI. Stub API: `POST /api/feedback/extension` (501).
+- **Alerts**: Recomputed for a tutor when they load the tutor dashboard or when a student submits a task (non-dismissed rows are refreshed). Dismissed alerts are kept until manually cleared from the DB or you adjust the sync logic.
+- **Grading**: Task solutions are read with the **service role** only inside server actions after session checks, so students cannot rely on the anon key alone to read full answer keys.
+
+## Scripts
+
+| Command | Purpose |
+|---------|---------|
+| `npm run dev` | Development server |
+| `npm run build` | Production build |
+| `npm run seed` | Seed demo data (needs service role) |
