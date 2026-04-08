@@ -42,7 +42,7 @@ const S = {
 
 const USERS: { email: string; full_name: string; role: "tutor" | "student" }[] =
   [
-    { email: "tutor@sprout.demo", full_name: "Jordan Kim", role: "tutor" },
+    { email: "tutor@sprout.demo", full_name: "Hasini Samaranayake", role: "tutor" },
     { email: "alex.thriving@sprout.demo", full_name: "Alex Rivera", role: "student" },
     {
       email: "brianna.struggling@sprout.demo",
