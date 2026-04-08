@@ -72,7 +72,7 @@ export function SignupForm() {
     return (
       <Card className="w-full max-w-md border-stone-200 shadow-sm">
         <CardHeader className="flex flex-col items-center gap-2 text-center">
-          <SproutLogo size={56} priority />
+          <SproutLogo size={64} priority />
           <CardDescription>
             Check your email for a confirmation link. After you confirm, you will
             be signed in and redirected to your Sprout home.
@@ -93,7 +93,7 @@ export function SignupForm() {
   return (
     <Card className="w-full max-w-md border-stone-200 shadow-sm">
       <CardHeader className="flex flex-col items-center gap-3 text-center">
-        <SproutLogo size={56} priority />
+        <SproutLogo size={64} priority />
         <CardDescription>
           Create an account to continue. Already registered?{" "}
           <Link

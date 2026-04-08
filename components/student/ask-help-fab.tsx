@@ -25,7 +25,7 @@ export function AskHelpFab({
       )}
     >
       <span className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-white">
-        <SproutLogo size={28} />
+        <SproutLogo size={32} />
       </span>
       <span className="text-sm font-bold text-sprout-on-secondary-container">
         Ask for help

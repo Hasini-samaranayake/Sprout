@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { cn } from "@/lib/utils";
 
 type SproutLogoProps = {
   className?: string;
@@ -9,7 +10,7 @@ type SproutLogoProps = {
 
 export function SproutLogo({
   className,
-  size = 64,
+  size = 72,
   priority = false,
 }: SproutLogoProps) {
   return (
@@ -18,7 +19,7 @@ export function SproutLogo({
       alt="Sprout"
       width={size}
       height={size}
-      className={className}
+      className={cn("overflow-hidden rounded-2xl shadow-sm", className)}
       priority={priority}
     />
   );

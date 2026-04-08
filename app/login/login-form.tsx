@@ -47,7 +47,7 @@ export function LoginForm() {
   return (
     <Card className="w-full max-w-md border-stone-200 shadow-sm">
       <CardHeader className="flex flex-col items-center gap-3 text-center">
-        <SproutLogo size={56} priority />
+        <SproutLogo size={64} priority />
         <CardDescription>
           Sign in to continue. Use the demo accounts from the README after
           seeding. New here?{" "}

@@ -30,14 +30,14 @@ export function AppFrame({
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <header className="border-b border-border/80 bg-card/90 backdrop-blur">
+      <header className="rounded-b-2xl border-b border-border/80 bg-card/90 backdrop-blur">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-4">
           <div className="flex items-center gap-8">
             <Link
               href={role === "student" ? "/dashboard/student" : "/dashboard/tutor"}
               className="flex items-center gap-2 text-lg font-semibold tracking-tight text-primary"
             >
-              <SproutLogo size={36} />
+              <SproutLogo size={44} />
               <span>Sprout</span>
             </Link>
             <nav className="hidden gap-1 sm:flex" aria-label="Main">

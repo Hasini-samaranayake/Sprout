@@ -10,7 +10,7 @@ export default function AnnotateLayout({
     <div className="min-h-screen bg-background">
       <header className="sticky top-0 z-30 flex items-center justify-between border-b border-border/80 bg-card/90 px-4 py-4 backdrop-blur">
         <div className="flex items-center gap-3">
-          <SproutLogo size={36} />
+          <SproutLogo size={44} />
           <div>
             <p className="text-lg font-bold tracking-tight text-sprout-on-surface">
               Sprout

@@ -14,7 +14,7 @@ export default async function Home() {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center gap-8 bg-stone-50 px-4 py-12">
       <div className="flex flex-col items-center gap-3 text-center">
-        <SproutLogo size={120} priority className="drop-shadow-sm" />
+        <SproutLogo size={144} priority className="drop-shadow-sm" />
         <h1 className="text-2xl font-semibold tracking-tight text-teal-900">
           Sprout
         </h1>
