@@ -36,19 +36,6 @@ function greetingLabel() {
   return "Good evening";
 }
 
-function getSubjectId(enrollment: {
-  subjects: unknown;
-}): string {
-  const s = enrollment.subjects;
-  if (s && typeof s === "object" && !Array.isArray(s) && "id" in s) {
-    return String((s as { id: string }).id);
-  }
-  if (Array.isArray(s) && s[0] && typeof s[0] === "object" && "id" in s[0]) {
-    return String((s[0] as { id: string }).id);
-  }
-  return "";
-}
-
 export default async function StudentDashboardPage() {
   const profile = await getProfile();
   if (!profile) return null;
@@ -131,15 +118,16 @@ export default async function StudentDashboardPage() {
     .eq("student_id", profile.id)
     .maybeSingle();
 
-  let tutorEmail: string | null = null;
-  if (tutorLink?.tutor_id) {
-    const { data: tutorProfile } = await supabase
-      .from("profiles")
-      .select("email")
-      .eq("id", tutorLink.tutor_id)
-      .maybeSingle();
-    tutorEmail = tutorProfile?.email ?? null;
-  }
+  const hasTutorLink = Boolean(tutorLink?.tutor_id);
+
+  const { data: savedWhiteboardLessons } = tutorLink?.tutor_id
+    ? await supabase
+        .from("tutor_whiteboard_lessons")
+        .select("id, title, created_at")
+        .eq("tutor_id", tutorLink.tutor_id)
+        .order("created_at", { ascending: false })
+        .limit(6)
+    : { data: null };
 
   const firstName = profile.full_name?.split(" ")[0] ?? "Sprout";
 
@@ -163,16 +151,12 @@ export default async function StudentDashboardPage() {
             <h2 className="text-xl font-bold text-sprout-on-surface md:text-2xl">
               My subjects
             </h2>
-            {enrollments?.[0] ? (
-              <Link
-                href={`/subjects/${getSubjectId(enrollments[0])}`}
-                className="text-sm font-semibold text-primary"
-              >
-                View all
-              </Link>
-            ) : (
-              <span className="text-sm text-sprout-on-surface-variant">—</span>
-            )}
+            <Link
+              href="/subjects"
+              className="text-sm font-semibold text-primary"
+            >
+              View all / add class
+            </Link>
           </div>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
             {(enrollments ?? []).map((e, idx) => {
@@ -297,6 +281,40 @@ export default async function StudentDashboardPage() {
         </div>
       </section>
 
+      {hasTutorLink && (savedWhiteboardLessons ?? []).length > 0 && (
+        <section className="relative overflow-hidden rounded-3xl border border-sprout-outline-variant/20 bg-sprout-surface-container p-8 shadow-[0_12px_32px_-4px_rgba(45,52,48,0.06)] md:p-10">
+          <span className="mb-4 inline-flex items-center rounded-full bg-sprout-secondary-container px-4 py-1.5 text-xs font-bold text-sprout-on-secondary-container">
+            From your tutor
+          </span>
+          <h2 className="mb-2 text-xl font-extrabold text-sprout-on-surface md:text-2xl">
+            Saved lessons
+          </h2>
+          <p className="mb-6 text-sm text-sprout-on-surface-variant">
+            Whiteboard snapshots your tutor saved for you.
+          </p>
+          <ul className="grid gap-3 sm:grid-cols-2">
+            {(savedWhiteboardLessons ?? []).map((lesson) => (
+              <li key={lesson.id}>
+                <Link
+                  href={`/lessons/saved/${lesson.id}`}
+                  className="flex flex-col rounded-2xl border border-sprout-outline-variant/30 bg-white p-4 transition hover:border-primary/40 hover:shadow-sm"
+                >
+                  <span className="font-semibold text-sprout-on-surface">
+                    {lesson.title}
+                  </span>
+                  <span className="mt-1 text-xs text-sprout-on-surface-variant">
+                    {new Date(lesson.created_at).toLocaleString()}
+                  </span>
+                  <span className="mt-3 text-sm font-bold text-primary">
+                    View lesson →
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
       <div id="due-work" className="scroll-mt-24 space-y-3">
         <h2 className="text-lg font-bold text-sprout-on-surface">
           Due work &amp; upcoming
@@ -406,7 +424,7 @@ export default async function StudentDashboardPage() {
         on a day to keep momentum.
       </p>
 
-      <AskHelpFab tutorEmail={tutorEmail} />
+      <AskHelpFab hasTutorLink={hasTutorLink} />
     </div>
   );
 }

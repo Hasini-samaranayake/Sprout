@@ -28,7 +28,16 @@ import {
   TutorNudgeCards,
   type NudgeStudent,
 } from "@/components/tutor/tutor-nudge-cards";
-import { ArrowRight, BookOpen, Sparkles, Timer, Flower2 } from "lucide-react";
+import {
+  ArrowRight,
+  BookOpen,
+  MessageCircle,
+  Sparkles,
+  Timer,
+  Flower2,
+  Users,
+} from "lucide-react";
+import { CreateClassForm } from "@/components/tutor/create-class-form";
 
 export default async function TutorDashboardPage() {
   const profile = await getProfile();
@@ -217,6 +226,32 @@ export default async function TutorDashboardPage() {
   const topAlert = (alerts ?? [])[0];
   const submissionCount = (alerts ?? []).length;
 
+  const { data: unreadHelpRows } = await supabase
+    .from("help_requests")
+    .select("id")
+    .eq("tutor_id", profile.id)
+    .is("read_at", null);
+  const unreadHelpCount = (unreadHelpRows ?? []).length;
+
+  const { data: latestHelp } = await supabase
+    .from("help_requests")
+    .select("id, body, created_at, read_at")
+    .eq("tutor_id", profile.id)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  const { data: tutorClasses } = await supabase
+    .from("tutor_classes")
+    .select("id, title, code, created_at, subjects(title)")
+    .eq("tutor_id", profile.id)
+    .order("created_at", { ascending: false });
+
+  const { data: catalogSubjects } = await supabase
+    .from("subjects")
+    .select("id, title")
+    .order("title", { ascending: true });
+
   return (
     <div className="space-y-12">
       <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
@@ -248,14 +283,58 @@ export default async function TutorDashboardPage() {
           </Button>
           <Button
             type="button"
-            className="rounded-full bg-gradient-to-br from-[var(--sprout-gradient-from)] to-[var(--sprout-gradient-to)] font-bold text-[var(--sprout-on-primary-container)] shadow-lg"
-            disabled
-            title="Coming soon"
+            variant="outline"
+            className="rounded-full border-primary/40 font-semibold"
+            asChild
           >
-            + New task
+            <Link href="/dashboard/tutor/assign-homework">Assign homework</Link>
+          </Button>
+          <Button
+            type="button"
+            className="rounded-full bg-gradient-to-br from-[var(--sprout-gradient-from)] to-[var(--sprout-gradient-to)] font-bold text-[var(--sprout-on-primary-container)] shadow-lg"
+            asChild
+          >
+            <Link href="/dashboard/tutor/whiteboard">+ New lesson</Link>
           </Button>
         </div>
       </div>
+
+      <Card className="border-sprout-outline-variant/20 bg-card">
+        <CardHeader className="flex flex-row items-start justify-between gap-4 pb-2">
+          <div className="flex items-start gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-sprout-primary-container/30">
+              <MessageCircle className="h-5 w-5 text-primary" />
+            </div>
+            <div>
+              <CardTitle className="text-lg">Help requests</CardTitle>
+              <CardDescription>
+                {unreadHelpCount > 0
+                  ? `${unreadHelpCount} unread from students`
+                  : "No unread messages"}
+              </CardDescription>
+            </div>
+          </div>
+          <Link
+            href="/dashboard/tutor/help"
+            className={cn(
+              buttonVariants({ variant: "default", size: "sm" }),
+              "shrink-0 bg-teal-700 hover:bg-teal-800"
+            )}
+          >
+            Open inbox
+          </Link>
+        </CardHeader>
+        {latestHelp && (
+          <CardContent className="pt-0">
+            <p className="line-clamp-2 text-sm text-sprout-on-surface-variant">
+              {latestHelp.body}
+            </p>
+            <p className="mt-1 text-xs text-sprout-on-surface-variant">
+              {new Date(latestHelp.created_at).toLocaleString()}
+            </p>
+          </CardContent>
+        )}
+      </Card>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
         <Card className="relative overflow-hidden border-sprout-outline-variant/20 bg-sprout-surface-container lg:col-span-8">

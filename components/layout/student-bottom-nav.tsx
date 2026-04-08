@@ -13,7 +13,12 @@ const items = [
     label: "Homework",
     icon: BookOpen,
   },
-  { id: "messages", href: "/settings", label: "Messages", icon: MessageCircle },
+  {
+    id: "messages",
+    href: "/dashboard/student/messages",
+    label: "Messages",
+    icon: MessageCircle,
+  },
   { id: "profile", href: "/settings", label: "Profile", icon: User },
 ];
 
@@ -29,9 +34,11 @@ export function StudentBottomNav() {
         const active =
           id === "home"
             ? pathname === "/dashboard/student"
-            : id === "profile"
-              ? pathname === "/settings"
-              : false;
+            : id === "messages"
+              ? pathname === "/dashboard/student/messages"
+              : id === "profile"
+                ? pathname === "/settings"
+                : false;
         return (
           <Link
             key={id}

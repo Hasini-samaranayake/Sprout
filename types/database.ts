@@ -57,6 +57,25 @@ export interface Database {
         };
         Update: Partial<Database["public"]["Tables"]["tutor_student_links"]["Insert"]>;
       };
+      tutor_classes: {
+        Row: {
+          id: string;
+          tutor_id: string;
+          subject_id: string;
+          title: string;
+          code: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          tutor_id: string;
+          subject_id: string;
+          title?: string;
+          code: string;
+          created_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["tutor_classes"]["Insert"]>;
+      };
       subjects: {
         Row: {
           id: string;
@@ -327,6 +346,48 @@ export interface Database {
           updated_at?: string;
         };
         Update: Partial<Database["public"]["Tables"]["tutor_notes"]["Insert"]>;
+      };
+      help_requests: {
+        Row: {
+          id: string;
+          student_id: string;
+          tutor_id: string;
+          body: string;
+          read_at: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          student_id: string;
+          tutor_id: string;
+          body: string;
+          read_at?: string | null;
+          created_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["help_requests"]["Insert"]>;
+      };
+      tutor_whiteboard_lessons: {
+        Row: {
+          id: string;
+          tutor_id: string;
+          title: string;
+          image_storage_path: string;
+          strokes_json: Json | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          tutor_id: string;
+          title?: string;
+          image_storage_path: string;
+          strokes_json?: Json | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<
+          Database["public"]["Tables"]["tutor_whiteboard_lessons"]["Insert"]
+        >;
       };
     };
     Views: Record<string, never>;
