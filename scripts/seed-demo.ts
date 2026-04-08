@@ -219,6 +219,7 @@ async function main() {
     {
       id: S.task5,
       type: "structured",
+      options: { homeworkWorkspace: true },
       prompt:
         "In one sentence, what is the main idea of a thesis statement?",
       correct_answer: "it states the main argument",

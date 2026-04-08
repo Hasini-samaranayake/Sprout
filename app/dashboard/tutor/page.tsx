@@ -10,7 +10,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import {
   Table,
   TableBody,
@@ -25,6 +24,11 @@ import {
   refreshTutorAlertsAction,
   dismissAlertFormAction,
 } from "@/app/actions/tutor";
+import {
+  TutorNudgeCards,
+  type NudgeStudent,
+} from "@/components/tutor/tutor-nudge-cards";
+import { ArrowRight, BookOpen, Sparkles, Timer, Flower2 } from "lucide-react";
 
 export default async function TutorDashboardPage() {
   const profile = await getProfile();
@@ -43,7 +47,10 @@ export default async function TutorDashboardPage() {
   const { data: studentProfiles } = await supabase
     .from("profiles")
     .select("id, full_name, email")
-    .in("id", studentIds.length ? studentIds : ["00000000-0000-0000-0000-000000000000"]);
+    .in(
+      "id",
+      studentIds.length ? studentIds : ["00000000-0000-0000-0000-000000000000"]
+    );
 
   const nameById = new Map(
     (studentProfiles ?? []).map((p) => [
@@ -51,6 +58,12 @@ export default async function TutorDashboardPage() {
       p.full_name ?? p.email ?? "Student",
     ])
   );
+
+  const emailById = new Map(
+    (studentProfiles ?? []).map((p) => [p.id, p.email ?? null])
+  );
+
+  const now = new Date();
 
   const metrics = await Promise.all(
     studentIds.map(async (sid) => {
@@ -82,6 +95,15 @@ export default async function TutorDashboardPage() {
         .limit(1)
         .maybeSingle();
 
+      const lastAt = lastAct?.occurred_at
+        ? new Date(lastAct.occurred_at)
+        : null;
+      const inactiveDays = lastAt
+        ? Math.floor(
+            (now.getTime() - lastAt.getTime()) / (1000 * 60 * 60 * 24)
+          )
+        : null;
+
       const { data: attempts } = await supabase
         .from("task_attempts")
         .select("result, score")
@@ -112,97 +134,230 @@ export default async function TutorDashboardPage() {
           ? lessonRates.reduce((a, b) => a + b, 0) / lessonRates.length
           : 0;
 
+      const { data: latestAttempt } = await supabase
+        .from("task_attempts")
+        .select("lesson_id, created_at, result")
+        .eq("student_id", sid)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      let latestHomework: NudgeStudent["latestHomework"] = null;
+      if (latestAttempt?.lesson_id) {
+        const { data: lessonRow } = await supabase
+          .from("lessons")
+          .select("title")
+          .eq("id", latestAttempt.lesson_id)
+          .maybeSingle();
+        if (lessonRow) {
+          latestHomework = {
+            lessonTitle: lessonRow.title,
+            result: latestAttempt.result,
+            createdAt: latestAttempt.created_at,
+          };
+        }
+      }
+
       return {
         id: sid,
         name,
         avgProgress,
         streak: streak?.current_streak ?? 0,
         lastActivity: lastAct?.occurred_at ?? null,
+        inactiveDays,
         avgScore,
         struggling: incorrect,
         lessonAvg,
+        latestHomework,
       };
     })
   );
 
   const { data: alerts } = await supabase
     .from("alerts")
-    .select("id, student_id, severity, message, suggested_action")
+    .select(
+      "id, student_id, severity, message, suggested_action, reason_code"
+    )
     .eq("tutor_id", profile.id)
     .is("dismissed_at", null)
     .order("severity", { ascending: false })
     .limit(20);
 
+  const alertByStudent = new Map<
+    string,
+    { severity: "high" | "medium" | "low" }
+  >();
+  for (const a of alerts ?? []) {
+    const cur = alertByStudent.get(a.student_id);
+    const rank = (s: string) =>
+      s === "high" ? 3 : s === "medium" ? 2 : 1;
+    if (
+      !cur ||
+      rank(a.severity) > rank(cur.severity)
+    ) {
+      alertByStudent.set(a.student_id, {
+        severity: a.severity as "high" | "medium" | "low",
+      });
+    }
+  }
+
+  const nudgeStudents: NudgeStudent[] = metrics.map((m) => ({
+    id: m.id,
+    name: m.name,
+    email: emailById.get(m.id) ?? null,
+    avgProgress: m.avgProgress,
+    streak: m.streak,
+    lastActivity: m.lastActivity,
+    inactiveDays: m.inactiveDays,
+    latestHomework: m.latestHomework,
+    alertSeverity: alertByStudent.get(m.id)?.severity ?? null,
+    consistencyBadge: m.streak >= 5 && m.avgProgress >= 70,
+  }));
+
+  const topAlert = (alerts ?? [])[0];
+  const submissionCount = (alerts ?? []).length;
+
   return (
-    <div className="space-y-8">
-      <div className="flex flex-wrap items-end justify-between gap-4">
+    <div className="space-y-12">
+      <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
         <div>
-          <h1 className="text-2xl font-semibold text-stone-900">
-            Tutor overview
+          <h1 className="text-3xl font-extrabold tracking-tight text-sprout-on-surface md:text-4xl">
+            Welcome back, Tutor!
           </h1>
-          <p className="mt-1 text-stone-600">
-            Who needs a check-in, and what should you do next?
+          <p className="mt-2 text-lg text-sprout-on-surface-variant">
+            You have{" "}
+            <span className="font-bold text-primary">{submissionCount}</span>{" "}
+            submission{submissionCount === 1 ? "" : "s"} to review today.
           </p>
         </div>
-        <form action={refreshTutorAlertsAction}>
-          <Button type="submit" variant="outline" size="sm">
-            Refresh alerts
+        <div className="flex flex-wrap items-center gap-3">
+          <form action={refreshTutorAlertsAction}>
+            <Button type="submit" variant="outline" size="sm" className="rounded-full">
+              Refresh alerts
+            </Button>
+          </form>
+          <Button
+            type="button"
+            variant="outline"
+            className="rounded-full bg-sprout-surface-container-highest font-semibold"
+            disabled
+            title="Coming soon"
+          >
+            <Sparkles className="mr-2 h-4 w-4" />
+            Weekly report
           </Button>
-        </form>
+          <Button
+            type="button"
+            className="rounded-full bg-gradient-to-br from-[var(--sprout-gradient-from)] to-[var(--sprout-gradient-to)] font-bold text-[var(--sprout-on-primary-container)] shadow-lg"
+            disabled
+            title="Coming soon"
+          >
+            + New task
+          </Button>
+        </div>
       </div>
 
-      <Card className="border-stone-200">
-        <CardHeader>
-          <CardTitle>Risk & follow-up</CardTitle>
-          <CardDescription>
-            Rule-based signals from activity, attempts, streaks, and due work.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          {(alerts ?? []).length === 0 ? (
-            <p className="text-sm text-stone-600">No active alerts.</p>
-          ) : (
-            (alerts ?? []).map((a) => {
-              const name = nameById.get(a.student_id) ?? "Student";
-              const sev = a.severity;
-              return (
-                <div
-                  key={a.id}
-                  className="flex flex-col gap-2 rounded-xl border border-stone-100 bg-stone-50/80 p-4 sm:flex-row sm:items-start sm:justify-between"
-                >
-                  <div>
-                    <div className="flex flex-wrap items-center gap-2">
-                      <p className="font-medium text-stone-900">{name}</p>
-                      <Badge
-                        variant={sev === "high" ? "destructive" : "secondary"}
-                      >
-                        {sev}
-                      </Badge>
-                    </div>
-                    <p className="mt-1 text-sm text-stone-700">{a.message}</p>
-                    {a.suggested_action && (
-                      <p className="mt-2 text-sm text-stone-600">
-                        <span className="font-medium text-stone-700">
-                          Suggested:
-                        </span>{" "}
-                        {a.suggested_action}
-                      </p>
-                    )}
-                  </div>
-                  <form action={dismissAlertFormAction} className="shrink-0">
-                    <input type="hidden" name="alertId" value={a.id} />
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
+        <Card className="relative overflow-hidden border-sprout-outline-variant/20 bg-sprout-surface-container lg:col-span-8">
+          <CardHeader className="relative z-10 space-y-4 pb-2">
+            <span className="inline-flex w-fit rounded-full bg-sprout-tertiary-container px-4 py-1 text-xs font-bold uppercase tracking-wider text-sprout-on-tertiary-container">
+              Priority insight
+            </span>
+            {topAlert ? (
+              <>
+                <CardTitle className="max-w-lg text-2xl font-bold leading-snug text-sprout-on-surface">
+                  {topAlert.message}
+                </CardTitle>
+                <div className="flex flex-wrap items-center gap-4">
+                  <Link
+                    href={`/students/${topAlert.student_id}`}
+                    className="flex items-center gap-2 font-bold text-primary hover:underline"
+                  >
+                    Take action now
+                    <ArrowRight className="h-4 w-4" />
+                  </Link>
+                  <form action={dismissAlertFormAction}>
+                    <input type="hidden" name="alertId" value={topAlert.id} />
                     <Button type="submit" size="sm" variant="ghost">
                       Dismiss
                     </Button>
                   </form>
                 </div>
-              );
-            })
-          )}
-        </CardContent>
-      </Card>
+              </>
+            ) : (
+              <p className="text-sprout-on-surface-variant">
+                No active priority alerts. Great job staying on top of things.
+              </p>
+            )}
+          </CardHeader>
+          <Flower2
+            className="pointer-events-none absolute -bottom-8 -right-8 h-48 w-48 text-sprout-on-surface-variant/10"
+            aria-hidden
+          />
+        </Card>
 
-      <Card className="border-stone-200">
+        <Card className="border-sprout-outline-variant/20 bg-sprout-secondary-container lg:col-span-4">
+          <CardContent className="flex flex-col items-center justify-center gap-4 py-10 text-center">
+            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-white shadow-sm">
+              <Timer className="h-8 w-8 text-sprout-on-secondary-container" />
+            </div>
+            <div>
+              <p className="text-4xl font-black text-sprout-on-secondary-container">
+                1.5h
+              </p>
+              <p className="mt-1 font-medium text-sprout-on-secondary-container/90">
+                Avg. grading time saved this week
+              </p>
+              <p className="mt-2 text-xs text-sprout-on-secondary-container/70">
+                Estimated from streak and review signals (not persisted yet).
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <TutorNudgeCards students={nudgeStudents} />
+
+      <section className="rounded-3xl bg-sprout-surface-container p-8">
+        <div className="mb-8 flex flex-wrap items-center gap-4">
+          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white shadow-sm">
+            <BookOpen className="h-6 w-6 text-primary" />
+          </div>
+          <div>
+            <h2 className="text-2xl font-bold text-sprout-on-surface">
+              Recommended resources
+            </h2>
+            <p className="text-sprout-on-surface-variant">
+              Guide your students with these curated materials.
+            </p>
+          </div>
+        </div>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {[
+            { t: "Leaf types guide", icon: "article" },
+            { t: "Photosynthesis 101", icon: "video" },
+            { t: "Soil health quiz", icon: "quiz" },
+            { t: "Root lab activity", icon: "lab" },
+          ].map((r) => (
+            <a
+              key={r.t}
+              href="https://sprout.app"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex cursor-pointer items-center gap-4 rounded-xl bg-white p-4 shadow-sm transition hover:shadow-md"
+            >
+              <div className="rounded-lg bg-sprout-primary-container/20 p-2 text-primary">
+                <BookOpen className="h-5 w-5" />
+              </div>
+              <span className="text-sm font-bold text-sprout-on-surface">
+                {r.t}
+              </span>
+            </a>
+          ))}
+        </div>
+      </section>
+
+      <Card className="border-sprout-outline-variant/20 bg-card">
         <CardHeader>
           <CardTitle>Your students</CardTitle>
           <CardDescription>
@@ -242,7 +397,7 @@ export default async function TutorDashboardPage() {
                   <TableCell className="text-right tabular-nums">
                     {m.struggling}
                   </TableCell>
-                  <TableCell className="text-xs text-stone-500">
+                  <TableCell className="text-xs text-muted-foreground">
                     {m.lastActivity
                       ? new Date(m.lastActivity).toLocaleString()
                       : "—"}

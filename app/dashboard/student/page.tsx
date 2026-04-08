@@ -1,8 +1,15 @@
 import Link from "next/link";
+import {
+  BookOpen,
+  Calculator,
+  Flame,
+  Lightbulb,
+  Microscope,
+  Star,
+} from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { getProfile } from "@/lib/auth/get-profile";
 import { getNextRecommendedStep } from "@/lib/student/next-step";
-import { computeMomentum } from "@/lib/student/momentum";
 import {
   Card,
   CardContent,
@@ -10,11 +17,37 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { buttonVariants } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
-import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
+import { CircularSubjectProgress } from "@/components/sprout/circular-subject-progress";
+import { SproutGradientButton } from "@/components/sprout/sprout-gradient-button";
+import { AskHelpFab } from "@/components/student/ask-help-fab";
+
+const SUBJECT_ICONS = [Calculator, Microscope, BookOpen] as const;
+const RING_COLORS = [
+  undefined,
+  "text-[#3e6752]",
+  "text-[#556444]",
+] as const;
+
+function greetingLabel() {
+  const h = new Date().getHours();
+  if (h < 12) return "Good morning";
+  if (h < 17) return "Good afternoon";
+  return "Good evening";
+}
+
+function getSubjectId(enrollment: {
+  subjects: unknown;
+}): string {
+  const s = enrollment.subjects;
+  if (s && typeof s === "object" && !Array.isArray(s) && "id" in s) {
+    return String((s as { id: string }).id);
+  }
+  if (Array.isArray(s) && s[0] && typeof s[0] === "object" && "id" in s[0]) {
+    return String((s[0] as { id: string }).id);
+  }
+  return "";
+}
 
 export default async function StudentDashboardPage() {
   const profile = await getProfile();
@@ -40,15 +73,14 @@ export default async function StudentDashboardPage() {
     .order("occurred_at", { ascending: false })
     .limit(8);
 
-  const { data: attempts } = await supabase
+  const { data: attemptsForStars } = await supabase
     .from("task_attempts")
-    .select("score, created_at")
-    .eq("student_id", profile.id)
-    .order("created_at", { ascending: false })
-    .limit(12);
+    .select("result")
+    .eq("student_id", profile.id);
 
-  const scores = (attempts ?? []).map((a) => Number(a.score));
-  const momentum = computeMomentum(scores);
+  const starsEarned = (attemptsForStars ?? []).filter(
+    (a) => a.result === "correct"
+  ).length;
 
   const nextStep = await getNextRecommendedStep(supabase, profile.id);
 
@@ -93,105 +125,187 @@ export default async function StudentDashboardPage() {
     (l) => l.due_at && l.due_at >= nowIso
   );
 
+  const { data: tutorLink } = await supabase
+    .from("tutor_student_links")
+    .select("tutor_id")
+    .eq("student_id", profile.id)
+    .maybeSingle();
+
+  let tutorEmail: string | null = null;
+  if (tutorLink?.tutor_id) {
+    const { data: tutorProfile } = await supabase
+      .from("profiles")
+      .select("email")
+      .eq("id", tutorLink.tutor_id)
+      .maybeSingle();
+    tutorEmail = tutorProfile?.email ?? null;
+  }
+
+  const firstName = profile.full_name?.split(" ")[0] ?? "Sprout";
+
   return (
-    <div className="space-y-8">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight text-stone-900">
-          Welcome back{profile.full_name ? `, ${profile.full_name.split(" ")[0]}` : ""}
+    <div className="relative space-y-10 pb-4">
+      <section className="space-y-2">
+        <h1 className="text-3xl font-extrabold tracking-tight text-sprout-on-surface md:text-4xl">
+          {greetingLabel()}, {firstName}!
         </h1>
-        <p className="mt-1 text-stone-600">
-          One step at a time — here is what matters today.
+        <p className="text-lg font-medium text-sprout-on-surface-variant">
+          You&apos;ve grown so much today. Ready to learn?
         </p>
-      </div>
+        <p className="text-sm text-sprout-on-surface-variant">
+          Overall progress: {Math.round(avgProgress)}% across enrolled subjects.
+        </p>
+      </section>
 
-      <div className="grid gap-4 md:grid-cols-3">
-        <Card className="border-stone-200">
-          <CardHeader className="pb-2">
-            <CardDescription>Overall progress</CardDescription>
-            <CardTitle className="text-3xl font-semibold tabular-nums">
-              {Math.round(avgProgress)}%
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Progress value={avgProgress} className="h-2" />
-            <p className="mt-2 text-xs text-stone-500">
-              Averaged across your enrolled subjects.
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="border-stone-200">
-          <CardHeader className="pb-2">
-            <CardDescription>Current streak</CardDescription>
-            <CardTitle className="text-3xl font-semibold tabular-nums">
-              {streak?.current_streak ?? 0}{" "}
-              <span className="text-lg font-normal text-stone-500">days</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="text-sm text-stone-600">
-            Best: {streak?.longest_streak ?? 0} days. Activity on a day keeps the
-            streak alive.
-          </CardContent>
-        </Card>
-
-        <Card className="border-stone-200">
-          <CardHeader className="pb-2">
-            <CardDescription>Momentum</CardDescription>
-            <CardTitle className="flex items-center gap-2 text-xl font-semibold">
-              {momentum.label}
-              <Badge variant="secondary" className="font-normal">
-                {Math.round(momentum.value * 100)}% recent
-              </Badge>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="text-sm text-stone-600">
-            {momentum.detail}
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className="grid gap-6 lg:grid-cols-2">
-        <Card className="border-stone-200">
-          <CardHeader>
-            <CardTitle>Next recommended step</CardTitle>
-            <CardDescription>
-              Continue where you left off — one focused step.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {nextStep ? (
-              <>
-                <div>
-                  <p className="text-sm font-medium text-stone-800">
-                    {nextStep.subjectTitle} · {nextStep.lessonTitle}
-                  </p>
-                  <p className="text-sm text-stone-600">
-                    Step {nextStep.stepIndex}: {nextStep.stepTitle}
-                  </p>
-                </div>
-                <Link
-                  href={`/lessons/${nextStep.lessonId}?task=${nextStep.taskId}`}
-                  className={cn(
-                    buttonVariants(),
-                    "bg-teal-700 text-white hover:bg-teal-800"
-                  )}
-                >
-                  Continue
-                </Link>
-              </>
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-12">
+        <div className="space-y-4 md:col-span-8">
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-bold text-sprout-on-surface md:text-2xl">
+              My subjects
+            </h2>
+            {enrollments?.[0] ? (
+              <Link
+                href={`/subjects/${getSubjectId(enrollments[0])}`}
+                className="text-sm font-semibold text-primary"
+              >
+                View all
+              </Link>
             ) : (
-              <p className="text-sm text-stone-600">
-                You are caught up on available steps. Nice work.
-              </p>
+              <span className="text-sm text-sprout-on-surface-variant">—</span>
             )}
-          </CardContent>
-        </Card>
+          </div>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            {(enrollments ?? []).map((e, idx) => {
+              const s = e.subjects as unknown as {
+                id: string;
+                title: string;
+              } | null;
+              if (!s) return null;
+              const pr = progressRows?.find((p) => p.subject_id === s.id);
+              const pct = pr ? Number(pr.completion_pct) : 0;
+              const Icon = SUBJECT_ICONS[idx % SUBJECT_ICONS.length];
+              const ringClass = RING_COLORS[idx % RING_COLORS.length];
+              return (
+                <Link
+                  key={s.id}
+                  href={`/subjects/${s.id}`}
+                  className="flex flex-col items-center rounded-2xl bg-sprout-surface-container-low p-6 text-center transition hover:bg-sprout-surface-container"
+                >
+                  <CircularSubjectProgress
+                    pct={pct}
+                    icon={Icon}
+                    ringClassName={ringClass}
+                  />
+                  <p className="mt-3 text-lg font-bold text-sprout-on-surface">
+                    {s.title}
+                  </p>
+                  <p className="text-xs font-medium text-sprout-on-surface-variant">
+                    {Math.round(pct)}% done
+                  </p>
+                </Link>
+              );
+            })}
+          </div>
+        </div>
 
-        <Card className="border-stone-200">
+        <div className="flex flex-col justify-center rounded-2xl bg-sprout-tertiary-container p-6 md:col-span-4 md:p-8">
+          <h2 className="text-xl font-bold text-sprout-on-tertiary-container md:text-2xl">
+            My Sprout stats
+          </h2>
+          <div className="mt-6 space-y-6">
+            <div className="flex items-center gap-4">
+              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-sprout-primary-container">
+                <Star
+                  className="h-7 w-7 fill-primary text-primary"
+                  aria-hidden
+                />
+              </div>
+              <div>
+                <p className="text-3xl font-extrabold tabular-nums text-sprout-on-tertiary-container">
+                  {starsEarned}
+                </p>
+                <p className="text-sm font-semibold text-sprout-on-tertiary-container/90">
+                  Stars earned
+                </p>
+                <p className="text-xs text-sprout-on-tertiary-container/80">
+                  One star per correct answer (all time).
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-4">
+              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-sprout-secondary-container">
+                <Flame
+                  className="h-7 w-7 text-primary"
+                  fill="currentColor"
+                  aria-hidden
+                />
+              </div>
+              <div>
+                <p className="text-3xl font-extrabold tabular-nums text-sprout-on-tertiary-container">
+                  {streak?.current_streak ?? 0}{" "}
+                  <span className="text-lg font-semibold">days</span>
+                </p>
+                <p className="text-sm font-semibold text-sprout-on-tertiary-container/90">
+                  Growth streak
+                </p>
+                <p className="text-xs text-sprout-on-tertiary-container/80">
+                  Best: {streak?.longest_streak ?? 0} days.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <section className="relative overflow-hidden rounded-3xl bg-sprout-surface-container-lowest p-8 shadow-[0_12px_32px_-4px_rgba(45,52,48,0.06)] md:p-12">
+        <Lightbulb
+          className="pointer-events-none absolute right-4 top-4 h-32 w-32 text-primary/10"
+          aria-hidden
+        />
+        <div className="relative z-10 max-w-2xl">
+          <span className="mb-4 inline-flex items-center rounded-full bg-sprout-primary-container px-4 py-1.5 text-xs font-bold text-sprout-on-primary-container">
+            Daily focus
+          </span>
+          {nextStep ? (
+            <>
+              <h2 className="mb-3 text-2xl font-extrabold leading-tight text-sprout-on-surface md:text-3xl">
+                {nextStep.lessonTitle}
+              </h2>
+              <p className="mb-2 text-sm font-medium text-sprout-on-surface-variant">
+                {nextStep.subjectTitle} · Step {nextStep.stepIndex}:{" "}
+                {nextStep.stepTitle}
+              </p>
+              <p className="mb-8 text-base text-sprout-on-surface-variant">
+                Continue where you left off — one focused step.
+              </p>
+              <SproutGradientButton
+                href={`/lessons/${nextStep.lessonId}?task=${nextStep.taskId}`}
+              >
+                Start learning
+              </SproutGradientButton>
+            </>
+          ) : (
+            <>
+              <h2 className="mb-3 text-2xl font-extrabold text-sprout-on-surface">
+                You&apos;re caught up
+              </h2>
+              <p className="text-sprout-on-surface-variant">
+                Nice work — there are no new recommended steps right now.
+              </p>
+            </>
+          )}
+        </div>
+      </section>
+
+      <div id="due-work" className="scroll-mt-24 space-y-3">
+        <h2 className="text-lg font-bold text-sprout-on-surface">
+          Due work &amp; upcoming
+        </h2>
+        <Card className="border-sprout-outline-variant/30 bg-card">
           <CardHeader>
-            <CardTitle>Due work & upcoming</CardTitle>
+            <CardTitle>Schedule</CardTitle>
             <CardDescription>
-              Assigned items and scheduled due dates in your subjects.
+              Assigned items and due dates in your subjects.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3 text-sm">
@@ -204,11 +318,13 @@ export default async function StudentDashboardPage() {
                   {overdue.map((l) => (
                     <div
                       key={`o-${l.id}`}
-                      className="flex items-start justify-between gap-2 rounded-lg border border-amber-100 bg-amber-50/80 px-3 py-2"
+                      className="flex items-start justify-between gap-2 rounded-xl border border-amber-100 bg-amber-50/80 px-3 py-2"
                     >
                       <div>
-                        <p className="font-medium text-stone-800">{l.title}</p>
-                        <p className="text-xs text-stone-500">
+                        <p className="font-medium text-sprout-on-surface">
+                          {l.title}
+                        </p>
+                        <p className="text-xs text-sprout-on-surface-variant">
                           {subjectTitle(l.subject_id)}
                         </p>
                       </div>
@@ -224,20 +340,22 @@ export default async function StudentDashboardPage() {
               </div>
             )}
             {upcomingFiltered.length === 0 && overdue.length === 0 ? (
-              <p className="text-stone-600">No dated assignments right now.</p>
+              <p className="text-sprout-on-surface-variant">
+                No dated assignments right now.
+              </p>
             ) : (
               upcomingFiltered.map((l) => (
                 <div
                   key={l.id}
-                  className="flex items-start justify-between gap-2 rounded-lg border border-stone-100 bg-stone-50/80 px-3 py-2"
+                  className="flex items-start justify-between gap-2 rounded-xl border border-sprout-outline-variant/20 bg-sprout-surface-container-low px-3 py-2"
                 >
                   <div>
-                    <p className="font-medium text-stone-800">{l.title}</p>
-                    <p className="text-xs text-stone-500">
+                    <p className="font-medium text-sprout-on-surface">{l.title}</p>
+                    <p className="text-xs text-sprout-on-surface-variant">
                       {subjectTitle(l.subject_id)}
                     </p>
                   </div>
-                  <span className="text-xs text-stone-500 tabular-nums">
+                  <span className="text-xs text-sprout-on-surface-variant tabular-nums">
                     {l.due_at
                       ? new Date(l.due_at).toLocaleDateString(undefined, {
                           month: "short",
@@ -253,57 +371,13 @@ export default async function StudentDashboardPage() {
       </div>
 
       <div>
-        <h2 className="mb-3 text-lg font-semibold text-stone-900">
-          Active subjects
-        </h2>
-        <div className="grid gap-3 sm:grid-cols-2">
-          {(enrollments ?? []).map((e) => {
-            const s = e.subjects as unknown as {
-              id: string;
-              title: string;
-              slug: string;
-              description: string | null;
-            } | null;
-            if (!s) return null;
-            const pr = progressRows?.find(
-              (p) => p.subject_id === s.id
-            );
-            const pct = pr ? Number(pr.completion_pct) : 0;
-            return (
-              <Card key={s.id} className="border-stone-200">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-base">{s.title}</CardTitle>
-                  {s.description && (
-                    <CardDescription>{s.description}</CardDescription>
-                  )}
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-stone-500">Topic progress</span>
-                    <span className="font-medium tabular-nums">{pct}%</span>
-                  </div>
-                  <Progress value={pct} className="h-2" />
-                  <Link
-                    href={`/subjects/${s.id}`}
-                    className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
-                  >
-                    Open subject
-                  </Link>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
-      </div>
-
-      <div>
-        <h2 className="mb-3 text-lg font-semibold text-stone-900">
+        <h2 className="mb-3 text-lg font-bold text-sprout-on-surface">
           Recent activity
         </h2>
-        <Card className="border-stone-200">
-          <CardContent className="divide-y divide-stone-100 px-0 py-0">
+        <Card className="border-sprout-outline-variant/30 bg-card">
+          <CardContent className="divide-y divide-border px-0 py-0">
             {(activity ?? []).length === 0 ? (
-              <p className="p-4 text-sm text-stone-600">
+              <p className="p-4 text-sm text-sprout-on-surface-variant">
                 No activity yet — start a lesson when you are ready.
               </p>
             ) : (
@@ -312,10 +386,10 @@ export default async function StudentDashboardPage() {
                   key={`${a.occurred_at}-${a.type}`}
                   className="flex items-center justify-between gap-4 px-4 py-3 text-sm"
                 >
-                  <span className="capitalize text-stone-800">
+                  <span className="capitalize text-sprout-on-surface">
                     {a.type.replace("_", " ")}
                   </span>
-                  <span className="text-xs text-stone-500 tabular-nums">
+                  <span className="text-xs text-sprout-on-surface-variant tabular-nums">
                     {new Date(a.occurred_at).toLocaleString()}
                   </span>
                 </div>
@@ -325,12 +399,14 @@ export default async function StudentDashboardPage() {
         </Card>
       </div>
 
-      <Separator />
+      <Separator className="bg-border" />
 
-      <p className="text-xs text-stone-500">
+      <p className="text-xs text-sprout-on-surface-variant">
         Streaks use calendar days in UTC. Complete at least one meaningful step
         on a day to keep momentum.
       </p>
+
+      <AskHelpFab tutorEmail={tutorEmail} />
     </div>
   );
 }

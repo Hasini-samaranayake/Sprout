@@ -290,7 +290,7 @@ export default async function TutorStudentPage({
 
       <Separator />
 
-      <Card className="border-stone-200">
+      <Card id="note" className="scroll-mt-24 border-stone-200">
         <CardHeader>
           <CardTitle>Tutor notes</CardTitle>
           <CardDescription>

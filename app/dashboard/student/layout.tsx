@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { AppFrame } from "@/components/layout/app-frame";
+import { StudentBottomNav } from "@/components/layout/student-bottom-nav";
 import { getProfile } from "@/lib/auth/get-profile";
 
 export default async function StudentDashboardLayout({
@@ -18,6 +19,7 @@ export default async function StudentDashboardLayout({
   return (
     <AppFrame role="student" title={title}>
       {children}
+      <StudentBottomNav />
     </AppFrame>
   );
 }

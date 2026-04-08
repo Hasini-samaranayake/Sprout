@@ -1,15 +1,12 @@
 import { getProfile } from "@/lib/auth/get-profile";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
+import { ProfileForm } from "@/components/settings/profile-form";
 
 export default async function SettingsPage() {
   const profile = await getProfile();
+
+  if (!profile) {
+    return null;
+  }
 
   return (
     <div className="mx-auto max-w-xl space-y-6">
@@ -20,33 +17,10 @@ export default async function SettingsPage() {
         </p>
       </div>
 
-      <Card className="border-stone-200">
-        <CardHeader>
-          <CardTitle>Profile</CardTitle>
-          <CardDescription>
-            Name and email come from your account. Extend this screen later with
-            editable fields.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-2 text-sm">
-          <div className="flex justify-between gap-4">
-            <span className="text-stone-500">Name</span>
-            <span className="text-stone-900">{profile?.full_name ?? "—"}</span>
-          </div>
-          <Separator />
-          <div className="flex justify-between gap-4">
-            <span className="text-stone-500">Email</span>
-            <span className="text-stone-900">{profile?.email ?? "—"}</span>
-          </div>
-          <Separator />
-          <div className="flex justify-between gap-4">
-            <span className="text-stone-500">Role</span>
-            <span className="capitalize text-stone-900">
-              {profile?.role ?? "—"}
-            </span>
-          </div>
-        </CardContent>
-      </Card>
+      <ProfileForm
+        key={`${profile.full_name ?? ""}|${profile.email ?? ""}`}
+        profile={profile}
+      />
     </div>
   );
 }

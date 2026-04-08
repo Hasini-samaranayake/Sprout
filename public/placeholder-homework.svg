@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="480" height="640" viewBox="0 0 480 640">
+  <rect width="480" height="640" fill="#f1f5f0"/>
+  <text x="240" y="300" text-anchor="middle" fill="#59615c" font-family="system-ui,sans-serif" font-size="18">Homework image</text>
+  <text x="240" y="330" text-anchor="middle" fill="#acb4ae" font-family="system-ui,sans-serif" font-size="14">Add homeworkImageUrl in task options</text>
+</svg>

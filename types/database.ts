@@ -16,6 +16,8 @@ export type ActivityEventType =
   | "session_booked"
   | "other";
 
+export type HomeworkSubmissionStatus = "draft" | "submitted";
+
 export interface Database {
   public: {
     Tables: {
@@ -279,6 +281,33 @@ export interface Database {
           created_at?: string;
         };
         Update: Partial<Database["public"]["Tables"]["alerts"]["Insert"]>;
+      };
+      homework_submissions: {
+        Row: {
+          id: string;
+          student_id: string;
+          lesson_id: string;
+          task_id: string | null;
+          comment_text: string | null;
+          strokes_json: Json | null;
+          image_storage_path: string | null;
+          status: HomeworkSubmissionStatus;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          student_id: string;
+          lesson_id: string;
+          task_id?: string | null;
+          comment_text?: string | null;
+          strokes_json?: Json | null;
+          image_storage_path?: string | null;
+          status?: HomeworkSubmissionStatus;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["homework_submissions"]["Insert"]>;
       };
       tutor_notes: {
         Row: {

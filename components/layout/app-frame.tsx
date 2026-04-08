@@ -9,10 +9,13 @@ export function AppFrame({
   role,
   title,
   children,
+  className,
 }: {
   role: UserRole;
   title: string;
   children: React.ReactNode;
+  /** e.g. room for mobile bottom nav + FAB */
+  className?: string;
 }) {
   const links =
     role === "student"
@@ -26,13 +29,13 @@ export function AppFrame({
         ];
 
   return (
-    <div className="min-h-screen bg-stone-50 text-stone-900">
-      <header className="border-b border-stone-200/80 bg-white/90 backdrop-blur">
+    <div className="min-h-screen bg-background text-foreground">
+      <header className="border-b border-border/80 bg-card/90 backdrop-blur">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-4">
           <div className="flex items-center gap-8">
             <Link
               href={role === "student" ? "/dashboard/student" : "/dashboard/tutor"}
-              className="flex items-center gap-2 text-lg font-semibold tracking-tight text-teal-800"
+              className="flex items-center gap-2 text-lg font-semibold tracking-tight text-primary"
             >
               <SproutLogo size={36} />
               <span>Sprout</span>
@@ -50,7 +53,7 @@ export function AppFrame({
             </nav>
           </div>
           <div className="flex items-center gap-3">
-            <span className="hidden text-sm text-stone-500 md:inline">{title}</span>
+            <span className="hidden text-sm text-muted-foreground md:inline">{title}</span>
             <form action={signOutAction}>
               <Button type="submit" variant="outline" size="sm">
                 Sign out
@@ -59,7 +62,15 @@ export function AppFrame({
           </div>
         </div>
       </header>
-      <main className="mx-auto max-w-6xl px-4 py-8">{children}</main>
+      <main
+        className={cn(
+          "mx-auto max-w-6xl px-4 py-8",
+          role === "student" && "pb-28 md:pb-8",
+          className
+        )}
+      >
+        {children}
+      </main>
     </div>
   );
 }

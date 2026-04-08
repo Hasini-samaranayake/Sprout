@@ -10,9 +10,10 @@ export default async function SignupPage({
 }) {
   const { user } = await getSessionUser();
   const sp = await searchParams;
-  const next = sp.next ?? "/dashboard";
+  const next = sp.next ?? "/dashboard/student";
   if (user) {
-    redirect(next.startsWith("/") ? next : "/dashboard");
+    const safe = next.startsWith("/") && !next.startsWith("//") ? next : "/dashboard/student";
+    redirect(safe);
   }
 
   return (

@@ -26,6 +26,12 @@ import {
 } from "@/components/ui/select";
 import type { TaskType } from "@/types/database";
 
+type TaskOptions = {
+  choices?: string[];
+  homeworkImageUrl?: string;
+  homeworkWorkspace?: boolean;
+};
+
 type Step = {
   id: string;
   order_index: number;
@@ -34,7 +40,7 @@ type Step = {
     id: string;
     type: TaskType;
     prompt: string;
-    options: { choices?: string[] } | null;
+    options: TaskOptions | null;
     hint_text: string | null;
   } | null;
 };
@@ -119,6 +125,10 @@ export function LessonRunner({
 
   const isMc = task.type === "multiple_choice";
   const choices = task.options?.choices ?? [];
+  const hwOpts = task.options;
+  const showHomeworkWorkspace =
+    hwOpts?.homeworkWorkspace === true ||
+    Boolean(hwOpts?.homeworkImageUrl?.trim());
 
   return (
     <div className="space-y-6">
@@ -149,6 +159,22 @@ export function LessonRunner({
           </CardDescription>
         </CardHeader>
         <CardContent>
+          {showHomeworkWorkspace && (
+            <div className="mb-4">
+              <Link
+                href={`/lessons/${lessonId}/annotate?task=${task.id}`}
+                className={cn(
+                  buttonVariants({ variant: "outline" }),
+                  "border-primary/30 bg-sprout-secondary-container/50 font-semibold text-primary hover:bg-sprout-secondary-container"
+                )}
+              >
+                Open homework workspace
+              </Link>
+              <p className="mt-2 text-xs text-stone-500">
+                Annotate your worksheet, add notes, and submit to your tutor.
+              </p>
+            </div>
+          )}
           <form onSubmit={onSubmit} className="space-y-4">
             <div className="rounded-lg bg-stone-50 p-4 text-sm leading-relaxed text-stone-800">
               {task.prompt}

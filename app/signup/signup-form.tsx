@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,9 +17,9 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { SproutLogo } from "@/components/brand/sprout-logo";
 
 export function SignupForm() {
-  const router = useRouter();
   const searchParams = useSearchParams();
-  const next = searchParams.get("next") ?? "/dashboard";
+  /** Public signup is always for students; avoid generic /dashboard + client nav race with stale sessions. */
+  const next = searchParams.get("next") ?? "/dashboard/student";
   const nextQuery = `next=${encodeURIComponent(next)}`;
 
   const [fullName, setFullName] = useState("");
@@ -38,11 +38,12 @@ export function SignupForm() {
     const emailRedirectTo = `${origin}/auth/callback?next=${encodeURIComponent(next)}`;
 
     const trimmedName = fullName.trim();
+    const emailNorm = email.trim().toLowerCase();
     const { data, error: signErr } = await supabase.auth.signUp({
-      email,
+      email: emailNorm,
       password,
       options: {
-        data: trimmedName ? { full_name: trimmedName } : {},
+        data: trimmedName ? { full_name: trimmedName, signup_role: "student" } : { signup_role: "student" },
         emailRedirectTo,
       },
     });
@@ -52,8 +53,16 @@ export function SignupForm() {
       return;
     }
     if (data.session) {
-      router.replace(next);
-      router.refresh();
+      const sessionEmail = data.user?.email?.toLowerCase();
+      if (sessionEmail && sessionEmail !== emailNorm) {
+        setError(
+          "Session email did not match. Try signing out, then create your account again."
+        );
+        return;
+      }
+      const target =
+        next.startsWith("/") && !next.startsWith("//") ? next : "/dashboard/student";
+      window.location.assign(target);
       return;
     }
     setCheckEmail(true);
