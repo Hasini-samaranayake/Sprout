@@ -62,14 +62,26 @@ const USERS: { email: string; full_name: string; role: "tutor" | "student" }[] =
     },
   ];
 
+/** Paginate through Auth users — default listUsers() only returns the first page. */
+async function findAuthUserByEmail(admin: SupabaseClient, email: string) {
+  const perPage = 200;
+  for (let page = 1; ; page++) {
+    const { data, error } = await admin.auth.admin.listUsers({ page, perPage });
+    if (error) throw error;
+    const found = data.users.find((u) => u.email === email);
+    if (found) return found;
+    if (data.users.length < perPage) break;
+  }
+  return null;
+}
+
 async function ensureUser(
   admin: SupabaseClient,
   email: string,
   password: string,
   meta: { full_name: string; role: string }
 ) {
-  const list = await admin.auth.admin.listUsers();
-  const found = list.data.users.find((u) => u.email === email);
+  const found = await findAuthUserByEmail(admin, email);
   if (found) {
     await admin.auth.admin.updateUserById(found.id, {
       password,
