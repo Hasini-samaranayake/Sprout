@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,12 +15,21 @@ import {
 } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { SproutLogo } from "@/components/brand/sprout-logo";
+import {
+  RoleToggle,
+  type AccountRole,
+} from "@/components/auth/role-toggle";
+
+function defaultNextForRole(role: AccountRole) {
+  return role === "tutor" ? "/dashboard/tutor" : "/dashboard/student";
+}
 
 export function SignupForm() {
+  const router = useRouter();
   const searchParams = useSearchParams();
-  /** Public signup is always for students; avoid generic /dashboard + client nav race with stale sessions. */
-  const next = searchParams.get("next") ?? "/dashboard/student";
-  const nextQuery = `next=${encodeURIComponent(next)}`;
+  const roleParam = searchParams.get("role");
+  const role: AccountRole =
+    roleParam === "tutor" ? "tutor" : "student";
 
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
@@ -28,6 +37,34 @@ export function SignupForm() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [checkEmail, setCheckEmail] = useState(false);
+
+  const explicitNext = searchParams.get("next");
+  const next = useMemo(() => {
+    if (explicitNext?.startsWith("/") && !explicitNext.startsWith("//")) {
+      return explicitNext;
+    }
+    return defaultNextForRole(role);
+  }, [explicitNext, role]);
+
+  const syncRoleToUrl = useCallback(
+    (r: AccountRole) => {
+      const params = new URLSearchParams();
+      params.set("role", r);
+      const n = searchParams.get("next");
+      if (n?.startsWith("/") && !n.startsWith("//")) {
+        params.set("next", n);
+      }
+      router.replace(`/signup?${params.toString()}`, { scroll: false });
+    },
+    [router, searchParams]
+  );
+
+  const nextQuery = useMemo(() => {
+    const params = new URLSearchParams();
+    params.set("next", next);
+    params.set("role", role);
+    return params.toString();
+  }, [next, role]);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -48,7 +85,10 @@ export function SignupForm() {
       email: emailNorm,
       password,
       options: {
-        data: { full_name: trimmedName, signup_role: "student" },
+        data: {
+          full_name: trimmedName,
+          signup_role: role,
+        },
         emailRedirectTo,
       },
     });
@@ -66,7 +106,9 @@ export function SignupForm() {
         return;
       }
       const target =
-        next.startsWith("/") && !next.startsWith("//") ? next : "/dashboard/student";
+        next.startsWith("/") && !next.startsWith("//")
+          ? next
+          : defaultNextForRole(role);
       window.location.assign(target);
       return;
     }
@@ -100,6 +142,9 @@ export function SignupForm() {
     );
   }
 
+  const roleLabel =
+    role === "tutor" ? "Tutor sign-up" : "Student sign-up";
+
   return (
     <Card className="w-full max-w-md rounded-2xl border-stone-200/90 bg-card/95 shadow-xl ring-1 ring-teal-900/5 backdrop-blur-sm">
       <CardHeader className="flex flex-col items-center gap-3 text-center">
@@ -111,7 +156,7 @@ export function SignupForm() {
             </span>
           </div>
           <p className="text-xs font-medium uppercase tracking-wider text-teal-800/70">
-            Student sign-up
+            {roleLabel}
           </p>
         </div>
         <CardDescription>
@@ -132,6 +177,19 @@ export function SignupForm() {
               <AlertDescription>{error}</AlertDescription>
             </Alert>
           )}
+          <div className="space-y-2">
+            <Label htmlFor="account-role">I am a</Label>
+            <RoleToggle
+              value={role}
+              onChange={syncRoleToUrl}
+              disabled={loading}
+            />
+            <p className="text-xs text-stone-500">
+              {role === "student"
+                ? "Students complete lessons and track streaks."
+                : "Tutors see rosters, alerts, and student progress."}
+            </p>
+          </div>
           <div className="space-y-2">
             <Label htmlFor="fullName">Name</Label>
             <Input

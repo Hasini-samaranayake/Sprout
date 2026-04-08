@@ -14,9 +14,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Sprout — Guided tutoring",
+  title: "Sprout — Guided tutoring platform",
   description:
-    "A tutoring platform for step-by-step learning and tutor decision support.",
+    "Guided tutoring platform for step-by-step learning and tutor support.",
 };
 
 export default function RootLayout({

@@ -19,7 +19,7 @@ export default async function Home() {
           Sprout
         </h1>
         <p className="max-w-sm text-sm text-stone-600">
-          Guided tutoring for step-by-step learning and tutor support.
+          Guided tutoring platform for step-by-step learning and tutor support.
         </p>
       </div>
       <div className="flex w-full max-w-xs flex-col gap-3">

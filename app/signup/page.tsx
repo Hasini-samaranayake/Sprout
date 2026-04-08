@@ -1,36 +1,52 @@
 import { Suspense } from "react";
 import { redirect } from "next/navigation";
-import { BookOpen, Heart, Sparkles } from "lucide-react";
+import { BookOpen, Heart, Sparkles, Users } from "lucide-react";
 import { getSessionUser } from "@/lib/auth/get-profile";
 import { SignupForm } from "./signup-form";
+
+const studentHighlights = [
+  {
+    icon: BookOpen,
+    text: "Short, step-by-step lessons you can finish in one sitting.",
+  },
+  {
+    icon: Sparkles,
+    text: "Friendly feedback as you practice—no scary red pens.",
+  },
+  {
+    icon: Heart,
+    text: "Your tutor can follow your streaks and nudge you when it helps.",
+  },
+];
+
+const tutorHighlights = [
+  {
+    icon: Users,
+    text: "See your roster, streaks, and who needs a nudge at a glance.",
+  },
+  {
+    icon: Sparkles,
+    text: "Rule-based alerts surface follow-ups without extra spreadsheets.",
+  },
+  {
+    icon: BookOpen,
+    text: "Open any linked student to review lessons and notes in context.",
+  },
+];
 
 export default async function SignupPage({
   searchParams,
 }: {
-  searchParams: Promise<{ next?: string }>;
+  searchParams: Promise<{ next?: string; role?: string }>;
 }) {
   const { user } = await getSessionUser();
   const sp = await searchParams;
-  const next = sp.next ?? "/dashboard/student";
+  const role = sp.role === "tutor" ? "tutor" : "student";
   if (user) {
-    const safe = next.startsWith("/") && !next.startsWith("//") ? next : "/dashboard/student";
-    redirect(safe);
+    redirect("/dashboard");
   }
 
-  const highlights = [
-    {
-      icon: BookOpen,
-      text: "Short, step-by-step lessons you can finish in one sitting.",
-    },
-    {
-      icon: Sparkles,
-      text: "Friendly feedback as you practice—no scary red pens.",
-    },
-    {
-      icon: Heart,
-      text: "Your tutor can follow your streaks and nudge you when it helps.",
-    },
-  ];
+  const highlights = role === "tutor" ? tutorHighlights : studentHighlights;
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-gradient-to-br from-stone-50 via-emerald-50/45 to-teal-50/35">
@@ -56,8 +72,7 @@ export default async function SignupPage({
             Sprout
           </h1>
           <p className="text-base leading-relaxed text-stone-600 sm:text-lg">
-            A cozy place for guided tutoring—bite-sized learning, gentle check-ins,
-            and room to grow at your pace.
+            Guided tutoring platform for step-by-step learning and tutor support.
           </p>
           <ul className="mx-auto flex w-full max-w-sm flex-col gap-3.5 text-left text-sm text-stone-600 md:mx-0 md:max-w-md">
             {highlights.map(({ icon: Icon, text }) => (
