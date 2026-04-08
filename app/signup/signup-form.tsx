@@ -38,12 +38,17 @@ export function SignupForm() {
     const emailRedirectTo = `${origin}/auth/callback?next=${encodeURIComponent(next)}`;
 
     const trimmedName = fullName.trim();
+    if (!trimmedName) {
+      setError("Please enter your name.");
+      setLoading(false);
+      return;
+    }
     const emailNorm = email.trim().toLowerCase();
     const { data, error: signErr } = await supabase.auth.signUp({
       email: emailNorm,
       password,
       options: {
-        data: trimmedName ? { full_name: trimmedName, signup_role: "student" } : { signup_role: "student" },
+        data: { full_name: trimmedName, signup_role: "student" },
         emailRedirectTo,
       },
     });
@@ -70,9 +75,14 @@ export function SignupForm() {
 
   if (checkEmail) {
     return (
-      <Card className="w-full max-w-md border-stone-200 shadow-sm">
+      <Card className="w-full max-w-md border-stone-200/90 bg-card/95 shadow-xl ring-1 ring-stone-200/60 backdrop-blur-sm">
         <CardHeader className="flex flex-col items-center gap-2 text-center">
-          <SproutLogo size={64} priority />
+          <div className="flex items-center gap-2.5">
+            <SproutLogo size={56} priority />
+            <span className="font-serif text-2xl font-semibold tracking-tight text-teal-900">
+              Sprout
+            </span>
+          </div>
           <CardDescription>
             Check your email for a confirmation link. After you confirm, you will
             be signed in and redirected to your Sprout home.
@@ -91,9 +101,19 @@ export function SignupForm() {
   }
 
   return (
-    <Card className="w-full max-w-md border-stone-200 shadow-sm">
+    <Card className="w-full max-w-md rounded-2xl border-stone-200/90 bg-card/95 shadow-xl ring-1 ring-teal-900/5 backdrop-blur-sm">
       <CardHeader className="flex flex-col items-center gap-3 text-center">
-        <SproutLogo size={64} priority />
+        <div className="flex flex-col items-center gap-2">
+          <div className="flex items-center gap-2.5">
+            <SproutLogo size={56} priority />
+            <span className="font-serif text-2xl font-semibold tracking-tight text-teal-900">
+              Sprout
+            </span>
+          </div>
+          <p className="text-xs font-medium uppercase tracking-wider text-teal-800/70">
+            Student sign-up
+          </p>
+        </div>
         <CardDescription>
           Create an account to continue. Already registered?{" "}
           <Link
@@ -113,12 +133,14 @@ export function SignupForm() {
             </Alert>
           )}
           <div className="space-y-2">
-            <Label htmlFor="fullName">Name (optional)</Label>
+            <Label htmlFor="fullName">Name</Label>
             <Input
               id="fullName"
               name="fullName"
               type="text"
               autoComplete="name"
+              required
+              minLength={1}
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
             />
@@ -150,7 +172,8 @@ export function SignupForm() {
           </div>
           <Button
             type="submit"
-            className="w-full bg-teal-700 hover:bg-teal-800"
+            size="lg"
+            className="h-12 w-full rounded-xl bg-teal-700 text-base font-semibold shadow-md hover:bg-teal-800"
             disabled={loading}
           >
             {loading ? "Creating account…" : "Create account"}
